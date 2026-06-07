@@ -6,22 +6,39 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="SyncNote">
-<meta name="theme-color" content="#1c1c1e">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f2f2f7">
+<meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#1c1c1e">
 <title>SyncNote</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ライトモード（デフォルト） */
 :root {
-  --bg: #1c1c1e;
-  --surface: #2c2c2e;
-  --surface2: #3a3a3c;
-  --border: #48484a;
-  --text: #ffffff;
-  --text-secondary: #ebebf5cc;
+  --bg: #f2f2f7;
+  --surface: #ffffff;
+  --surface2: #e5e5ea;
+  --border: #c6c6c8;
+  --text: #000000;
+  --text-secondary: #3c3c4399;
   --text-light: #8e8e93;
-  --accent: #ff9f0a;
-  --accent-red: #ff453a;
+  --accent: #ff9500;
+  --accent-red: #ff3b30;
   --font: -apple-system, "Hiragino Kaku Gothic ProN", "BIZ UDGothic", sans-serif;
+}
+
+/* ダークモード */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1c1e;
+    --surface: #2c2c2e;
+    --surface2: #3a3a3c;
+    --border: #48484a;
+    --text: #ffffff;
+    --text-secondary: #ebebf5cc;
+    --text-light: #8e8e93;
+    --accent: #ff9f0a;
+    --accent-red: #ff453a;
+  }
 }
 
 /* =====================================================
@@ -61,7 +78,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  padding-top: max(12px, env(safe-area-inset-top));
+  padding-top: calc(env(safe-area-inset-top) + 12px);
   background: var(--bg);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
@@ -117,6 +134,8 @@ body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   width: 100%;
+  /* FABに隠れないよう下に余白 */
+  padding-bottom: calc(env(safe-area-inset-bottom) + 80px);
 }
 .note-item {
   display: flex;
@@ -168,7 +187,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  padding-top: max(12px, env(safe-area-inset-top));
+  padding-top: calc(env(safe-area-inset-top) + 12px);
   background: var(--bg);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
@@ -231,7 +250,7 @@ body {
 /* ===== FAB ===== */
 .fab {
   position: absolute;
-  bottom: max(28px, env(safe-area-inset-bottom, 16px));
+  bottom: calc(env(safe-area-inset-bottom) + 16px);
   right: 20px;
   width: 56px; height: 56px;
   border-radius: 50%;
