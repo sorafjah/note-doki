@@ -509,10 +509,12 @@ function loadLocal() {
 // ===== GitHub設定 =====
 const GH_KEYS = ['gh-user', 'gh-repo', 'gh-folder', 'gh-token'];
 function getGhConfig() {
+  // 空文字の場合も 'notes' にフォールバック
+  const folder = localStorage.getItem('gh-folder');
   return {
     user:   localStorage.getItem('gh-user') || '',
     repo:   localStorage.getItem('gh-repo') || '',
-    folder: localStorage.getItem('gh-folder') || 'notes',
+    folder: (folder && folder.trim()) ? folder.trim() : 'notes',
     token:  localStorage.getItem('gh-token') || ''
   };
 }
@@ -541,10 +543,16 @@ function ghHeaders() {
 // ===== GitHub: ファイル一覧取得 =====
 async function ghListFiles() {
   const c = getGhConfig();
-  const folder = (c.folder || 'notes').replace(/\/$/, '');
+  const folder = c.folder; // getGhConfig()で正規化済み
   const url = `https://api.github.com/repos/${c.user}/${c.repo}/contents/${folder}`;
+  console.log('ghListFiles URL:', url); // デバッグ用
   const r = await fetch(url, { headers: ghHeaders() });
-  if (!r.ok) return [];
+  console.log('ghListFiles status:', r.status); // デバッグ用
+  if (!r.ok) {
+    const errText = await r.text();
+    console.log('ghListFiles error:', errText);
+    throw new Error(`${r.status}: ${errText}`);
+  }
   const files = await r.json();
   return files.filter(f => f.name.endsWith('.txt'));
 }
@@ -739,6 +747,7 @@ async function deleteCurrentNote() {
 // ===== GitHub同期: 全ファイル読み込み =====
 async function syncLoad() {
   if (!isGhConfigured()) return;
+  const c = getGhConfig();
   setStatus('読込中…', 'loading');
   try {
     const files = await ghListFiles();
@@ -753,7 +762,7 @@ async function syncLoad() {
           id,
           content: result.content,
           sha: result.sha,
-          updatedAt: existing.updatedAt || new Date(file.name).toISOString() || new Date().toISOString()
+          updatedAt: existing.updatedAt || new Date().toISOString()
         };
         loaded++;
       }
@@ -762,7 +771,8 @@ async function syncLoad() {
     renderList();
     setStatus(loaded > 0 ? `${loaded}件を読込` : '同期済み', 'ok');
   } catch(e) {
-    setStatus('読込失敗', 'err');
+    console.error('syncLoad error:', e);
+    setStatus(`読込失敗: ${e.message}`, 'err');
   }
 }
 
