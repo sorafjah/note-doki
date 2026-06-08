@@ -12,7 +12,6 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ライトモード（デフォルト） */
 :root {
   --bg: #f2f2f7;
   --surface: #ffffff;
@@ -24,9 +23,10 @@
   --accent: #ff9500;
   --accent-red: #ff3b30;
   --font: -apple-system, "Hiragino Kaku Gothic ProN", "BIZ UDGothic", sans-serif;
+  /* ★修正1: iPhoneフォント倍率（JS で上書き） */
+  --font-scale: 1;
 }
 
-/* ダークモード */
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #1c1c1e;
@@ -41,11 +41,6 @@
   }
 }
 
-/* =====================================================
-   修正5: レイアウト崩れ対策
-   html/body に width:100% を明示、overflow-x:hidden で横スクロール防止
-   position:fixed でiPhoneのビューポート変動に対応
-   ===================================================== */
 html {
   width: 100%;
   height: 100%;
@@ -58,7 +53,7 @@ body {
   background: var(--bg);
   color: var(--text);
   overflow: hidden;
-  position: fixed; /* iPhoneのアドレスバー出入りでリサイズされる問題を防ぐ */
+  position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
 }
 
@@ -66,8 +61,6 @@ body {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100%;
-  /* dvh使用。position:fixedと組み合わせてiPhone対応 */
   height: 100dvh;
   overflow: hidden;
 }
@@ -84,7 +77,7 @@ body {
   flex-shrink: 0;
 }
 .header-title {
-  font-size: 1.1rem;
+  font-size: calc(1.1rem * var(--font-scale));
   font-weight: 700;
   color: var(--text);
 }
@@ -92,7 +85,7 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.78rem;
+  font-size: calc(0.78rem * var(--font-scale));
   color: var(--text-light);
 }
 .status-dot {
@@ -111,7 +104,7 @@ body {
   background: none;
   border: none;
   color: var(--accent);
-  font-size: 1.3rem;
+  font-size: calc(1.3rem * var(--font-scale));
   cursor: pointer;
   padding: 4px;
   -webkit-tap-highlight-color: transparent;
@@ -125,7 +118,7 @@ body {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  width: 100%; /* 修正5: 明示的に100% */
+  width: 100%;
 }
 
 /* ===== ノート一覧 ===== */
@@ -134,7 +127,6 @@ body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   width: 100%;
-  /* FABに隠れないよう下に余白 */
   padding-bottom: calc(env(safe-area-inset-bottom) + 80px);
 }
 .note-item {
@@ -144,12 +136,12 @@ body {
   border-bottom: 1px solid var(--border);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  width: 100%; /* 修正5 */
+  width: 100%;
 }
 .note-item:active { background: var(--surface); }
 .note-item-body { flex: 1; min-width: 0; }
 .note-item-title {
-  font-size: 1.0625rem; /* 修正4: iPhoneメモアプリ基準 */
+  font-size: calc(1.0625rem * var(--font-scale));
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;
@@ -157,7 +149,7 @@ body {
   text-overflow: ellipsis;
 }
 .note-item-meta {
-  font-size: 0.8125rem; /* 修正4 */
+  font-size: calc(0.8125rem * var(--font-scale));
   color: var(--text-light);
   margin-top: 2px;
   white-space: nowrap;
@@ -165,7 +157,7 @@ body {
   text-overflow: ellipsis;
 }
 .note-item-date {
-  font-size: 0.75rem;
+  font-size: calc(0.75rem * var(--font-scale));
   color: var(--text-light);
   margin-right: 8px;
   flex-shrink: 0;
@@ -201,7 +193,7 @@ body {
   background: none;
   border: none;
   color: var(--accent);
-  font-size: 1rem;
+  font-size: calc(1rem * var(--font-scale));
   cursor: pointer;
   padding: 4px 8px 4px 0;
   -webkit-tap-highlight-color: transparent;
@@ -210,7 +202,7 @@ body {
   gap: 4px;
 }
 .editor-save-status {
-  font-size: 0.78rem;
+  font-size: calc(0.78rem * var(--font-scale));
   color: #30d158;
 }
 .editor-save-status.saving { color: var(--text-light); }
@@ -218,7 +210,7 @@ body {
   background: none;
   border: none;
   color: var(--accent-red);
-  font-size: 0.9rem;
+  font-size: calc(0.9rem * var(--font-scale));
   font-weight: 600;
   cursor: pointer;
   padding: 4px;
@@ -226,25 +218,21 @@ body {
   font-family: var(--font);
 }
 
-/* =====================================================
-   修正3: テキストエリア - scrollTop=0 はJS側で対応
-   修正4: フォントサイズ 17px (iPhoneメモアプリ基準)
-   ===================================================== */
+/* ★修正1: テキストエリアのフォントサイズ (--font-scale が1.5なら25.5px) */
 #editor-textarea {
   flex: 1;
   border: none;
   outline: none;
   resize: none;
   padding: 16px;
-  /* 修正4: iPhoneメモアプリは本文17px */
-  font-size: 17px;
+  font-size: calc(17px * var(--font-scale));
   line-height: 1.6;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  width: 100%; /* 修正5 */
+  width: 100%;
 }
 
 /* ===== FAB ===== */
@@ -298,7 +286,7 @@ body {
   overflow-y: auto;
 }
 .modal-box h2 {
-  font-size: 1rem;
+  font-size: calc(1rem * var(--font-scale));
   font-weight: 700;
   margin-bottom: 16px;
   color: var(--text);
@@ -306,7 +294,7 @@ body {
 .form-group { margin-bottom: 12px; }
 .form-group label {
   display: block;
-  font-size: 0.75rem;
+  font-size: calc(0.75rem * var(--font-scale));
   font-weight: 700;
   color: var(--text-light);
   margin-bottom: 4px;
@@ -319,7 +307,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 8px;
   font-family: var(--font);
-  font-size: 0.9rem;
+  font-size: calc(0.9rem * var(--font-scale));
   background: var(--surface2);
   color: var(--text);
 }
@@ -328,7 +316,7 @@ body {
   border-color: transparent;
 }
 .form-note {
-  font-size: 0.7rem;
+  font-size: calc(0.7rem * var(--font-scale));
   color: var(--text-light);
   margin-top: 3px;
 }
@@ -343,7 +331,7 @@ body {
   border: none;
   border-radius: 10px;
   font-family: var(--font);
-  font-size: 0.95rem;
+  font-size: calc(0.95rem * var(--font-scale));
   font-weight: 600;
   cursor: pointer;
 }
@@ -369,12 +357,12 @@ body {
   text-align: center;
 }
 .confirm-box h3 {
-  font-size: 0.95rem;
+  font-size: calc(0.95rem * var(--font-scale));
   font-weight: 700;
   margin-bottom: 8px;
 }
 .confirm-box p {
-  font-size: 0.8rem;
+  font-size: calc(0.8rem * var(--font-scale));
   color: var(--text-light);
   margin-bottom: 16px;
   line-height: 1.5;
@@ -389,12 +377,18 @@ body {
   border: none;
   border-radius: 10px;
   font-family: var(--font);
-  font-size: 0.95rem;
+  font-size: calc(0.95rem * var(--font-scale));
   font-weight: 600;
   cursor: pointer;
 }
 .btn-danger { background: var(--accent-red); color: #fff; }
 .btn-cancel-white { background: var(--surface2); color: var(--text); }
+
+/* ★修正2: スワイプ中のビジュアルフィードバック用トランジション */
+#editor-screen {
+  transition: transform 0.15s ease-out;
+  will-change: transform;
+}
 </style>
 </head>
 <body>
@@ -475,28 +469,23 @@ body {
 
 <script>
 // =====================================================
-// SyncNote - メモ管理アプリ
-// 修正点:
-//   1. 削除をGitHubにも反映
-//   2. 新規作成は空で開始
-//   3. メモを開いたとき先頭を表示
-//   4. フォントサイズ 17px
-//   5. レイアウト崩れ対策 (CSS + resize対応)
+// ★修正1: iPhoneかどうか判定してフォントを1.5倍に
 // =====================================================
+(function() {
+  const isIphone = /iPhone|iPod/.test(navigator.userAgent);
+  if (isIphone) {
+    document.documentElement.style.setProperty('--font-scale', '1.5');
+  }
+})();
 
 // ===== データ構造 =====
-// notes: { id: { id, title, content, updatedAt } }
-// GitHubには notes/<id>.txt として保存
-
-let notes = {};          // メモ一覧 (メモリ)
-let currentNoteId = null; // 編集中のノートID
+let notes = {};
+let currentNoteId = null;
 let autoSaveTimer = null;
 let isSaving = false;
 
-// ===== localStorage キー =====
 const LS_NOTES = 'syncnote-notes';
 
-// ===== ユーティリティ =====
 function genId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
@@ -514,7 +503,6 @@ function formatDate(iso) {
   }
 }
 
-// ===== ローカル保存 =====
 function saveLocal() {
   localStorage.setItem(LS_NOTES, JSON.stringify(notes));
 }
@@ -525,10 +513,8 @@ function loadLocal() {
   } catch(e) { notes = {}; }
 }
 
-// ===== GitHub設定 =====
 const GH_KEYS = ['gh-user', 'gh-repo', 'gh-folder', 'gh-token'];
 function getGhConfig() {
-  // 空文字の場合も 'notes' にフォールバック
   const folder = localStorage.getItem('gh-folder');
   return {
     user:   localStorage.getItem('gh-user') || '',
@@ -559,24 +545,19 @@ function ghHeaders() {
   };
 }
 
-// ===== GitHub: ファイル一覧取得 =====
 async function ghListFiles() {
   const c = getGhConfig();
-  const folder = c.folder; // getGhConfig()で正規化済み
+  const folder = c.folder;
   const url = `https://api.github.com/repos/${c.user}/${c.repo}/contents/${folder}`;
-  console.log('ghListFiles URL:', url); // デバッグ用
   const r = await fetch(url, { headers: ghHeaders() });
-  console.log('ghListFiles status:', r.status); // デバッグ用
   if (!r.ok) {
     const errText = await r.text();
-    console.log('ghListFiles error:', errText);
     throw new Error(`${r.status}: ${errText}`);
   }
   const files = await r.json();
   return files.filter(f => f.name.endsWith('.txt'));
 }
 
-// ===== GitHub: ファイル読み込み =====
 async function ghReadFile(id) {
   const url = ghApiUrl(id);
   const r = await fetch(url, { headers: ghHeaders() });
@@ -586,7 +567,6 @@ async function ghReadFile(id) {
   return { content, sha: d.sha };
 }
 
-// ===== GitHub: ファイル書き込み =====
 async function ghWriteFile(id, text, sha) {
   const url = ghApiUrl(id);
   const body = {
@@ -600,15 +580,10 @@ async function ghWriteFile(id, text, sha) {
   return d.content?.sha || sha;
 }
 
-// =====================================================
-// 修正1: GitHub: ファイル削除
-// sha が必要なので事前に取得してから DELETE を呼ぶ
-// =====================================================
 async function ghDeleteFile(id) {
   const url = ghApiUrl(id);
-  // まず sha を取得
   const r = await fetch(url, { headers: ghHeaders() });
-  if (!r.ok) return true; // 存在しない場合は成功扱い
+  if (!r.ok) return true;
   const d = await r.json();
   const sha = d.sha;
   const res = await fetch(url, {
@@ -619,7 +594,6 @@ async function ghDeleteFile(id) {
   return res.ok;
 }
 
-// ===== ステータス表示 =====
 function setStatus(msg, state = 'ok') {
   const dot = document.getElementById('status-dot');
   const txt = document.getElementById('status-text');
@@ -630,7 +604,6 @@ function setStatus(msg, state = 'ok') {
   }
 }
 
-// ===== 一覧画面を描画 =====
 function renderList() {
   const container = document.getElementById('note-list');
   container.innerHTML = '';
@@ -664,33 +637,28 @@ function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// =====================================================
-// 修正2: 新規作成は空で開始（プレースホルダーなし）
-// 修正3: openNote でテキストエリアのスクロールを先頭に
-// =====================================================
 function openNote(id) {
   currentNoteId = id;
   const note = notes[id];
   const ta = document.getElementById('editor-textarea');
   ta.value = note.content || '';
-
-  // 修正3: スクロールを先頭に強制リセット
-  // requestAnimationFrame で描画後に確実に 0 にセット
   ta.scrollTop = 0;
   requestAnimationFrame(() => {
     ta.scrollTop = 0;
-    // カーソルも先頭に
     ta.setSelectionRange(0, 0);
   });
-
   document.getElementById('editor-save-status').textContent = '';
   showEditor();
 }
 
 function showEditor() {
   document.getElementById('list-screen').style.display = 'none';
-  document.getElementById('editor-screen').classList.add('active');
+  const es = document.getElementById('editor-screen');
+  es.style.transition = 'none';
+  es.style.transform = 'translateX(0)';
+  es.classList.add('active');
 }
+
 function showList() {
   document.getElementById('editor-screen').classList.remove('active');
   document.getElementById('list-screen').style.display = 'flex';
@@ -736,22 +704,13 @@ async function saveCurrentNote() {
   }
 }
 
-// =====================================================
-// 修正1: 削除 → ローカルとGitHubの両方から削除
-// =====================================================
 async function deleteCurrentNote() {
   if (!currentNoteId) return;
   const id = currentNoteId;
-
-  // ローカルから削除
   delete notes[id];
   saveLocal();
-
-  // 一覧に戻る
   currentNoteId = null;
   showList();
-
-  // GitHubからも削除
   if (isGhConfigured()) {
     setStatus('削除中…', 'loading');
     try {
@@ -763,13 +722,28 @@ async function deleteCurrentNote() {
   }
 }
 
-// ===== GitHub同期: 全ファイル読み込み =====
+// =====================================================
+// ★修正3: syncLoad で「GitHubにないIDをローカルから削除」
+// =====================================================
 async function syncLoad() {
   if (!isGhConfigured()) return;
-  const c = getGhConfig();
   setStatus('読込中…', 'loading');
   try {
     const files = await ghListFiles();
+
+    // GitHub上のIDセット
+    const ghIds = new Set(files.map(f => f.name.replace('.txt', '')));
+
+    // ローカルにあってGitHubにないIDを削除
+    let removed = 0;
+    for (const id of Object.keys(notes)) {
+      if (!ghIds.has(id)) {
+        delete notes[id];
+        removed++;
+      }
+    }
+
+    // GitHub上のファイルを読み込み・更新
     let loaded = 0;
     for (const file of files) {
       const id = file.name.replace('.txt', '');
@@ -786,42 +760,113 @@ async function syncLoad() {
         loaded++;
       }
     }
+
     saveLocal();
     renderList();
-    setStatus(loaded > 0 ? `${loaded}件を読込` : '同期済み', 'ok');
+
+    const msg = removed > 0
+      ? `${loaded}件を読込（${removed}件を削除）`
+      : loaded > 0 ? `${loaded}件を読込` : '同期済み';
+    setStatus(msg, 'ok');
   } catch(e) {
     console.error('syncLoad error:', e);
     setStatus(`読込失敗: ${e.message}`, 'err');
   }
 }
 
-// ===== 修正5: リサイズ対応 =====
-// iPhoneでビューポートが変わったとき強制的に再描画
+// ===== リサイズ対応 =====
 function fixViewport() {
   document.documentElement.style.height = window.innerHeight + 'px';
   document.body.style.height = window.innerHeight + 'px';
 }
 
+// =====================================================
+// ★修正2: スワイプで一覧に戻る（右→左スワイプ）
+// エディタ画面で右→左スワイプで showList()
+// =====================================================
+function setupSwipeBack() {
+  const editorScreen = document.getElementById('editor-screen');
+  const SWIPE_THRESHOLD = 60;  // 最低スワイプ距離(px)
+  const EDGE_START = 40;       // 画面右端から何pxのタッチを対象にするか
+  const DIRECTION_ANGLE = 30;  // 許容する縦方向のずれ(度)
+
+  let startX = 0;
+  let startY = 0;
+  let tracking = false;
+
+  editorScreen.addEventListener('touchstart', (e) => {
+    if (!editorScreen.classList.contains('active')) return;
+    const touch = e.touches[0];
+    // 画面右端エリア or 全体（どちらでも可にする場合は条件削除）
+    const sw = window.innerWidth;
+    // 右端から EDGE_START px 以内のタッチのみ追跡
+    if (touch.clientX < sw - EDGE_START) return;
+    startX = touch.clientX;
+    startY = touch.clientY;
+    tracking = true;
+  }, { passive: true });
+
+  editorScreen.addEventListener('touchmove', (e) => {
+    if (!tracking) return;
+    const touch = e.touches[0];
+    const dx = touch.clientX - startX;
+    const dy = touch.clientY - startY;
+    // 右→左 (dx < 0) のみ対象
+    if (dx >= 0) return;
+    // 縦方向が大きすぎる場合はキャンセル
+    const angle = Math.abs(Math.atan2(dy, dx) * 180 / Math.PI);
+    if (angle < (180 - DIRECTION_ANGLE) && angle > DIRECTION_ANGLE) {
+      tracking = false;
+      editorScreen.style.transform = 'translateX(0)';
+      return;
+    }
+    // スワイプ中にエディタを少し左にずらしてフィードバック
+    editorScreen.style.transition = 'none';
+    editorScreen.style.transform = `translateX(${dx}px)`;
+  }, { passive: true });
+
+  editorScreen.addEventListener('touchend', (e) => {
+    if (!tracking) return;
+    tracking = false;
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - startX;
+
+    if (dx < -SWIPE_THRESHOLD) {
+      // 閾値を超えたら一覧へ
+      editorScreen.style.transition = 'transform 0.2s ease-out';
+      editorScreen.style.transform = 'translateX(-100%)';
+      setTimeout(() => {
+        editorScreen.style.transition = 'none';
+        editorScreen.style.transform = 'translateX(0)';
+        clearTimeout(autoSaveTimer);
+        saveCurrentNote().then(() => showList());
+      }, 200);
+    } else {
+      // 戻す
+      editorScreen.style.transition = 'transform 0.15s ease-out';
+      editorScreen.style.transform = 'translateX(0)';
+    }
+  }, { passive: true });
+}
+
 // ===== 初期化 =====
 document.addEventListener('DOMContentLoaded', () => {
-  // 修正5: 初期とリサイズ時にビューポート高さを固定
   fixViewport();
   window.addEventListener('resize', fixViewport);
 
   loadLocal();
   renderList();
+  setupSwipeBack();
 
-  // 修正2: 新規作成は空で開始
   document.getElementById('btn-new').addEventListener('click', () => {
     const id = genId();
     notes[id] = {
       id,
-      content: '',          // ← 空
+      content: '',
       updatedAt: new Date().toISOString()
     };
     saveLocal();
     openNote(id);
-    // フォーカスをセット
     setTimeout(() => document.getElementById('editor-textarea').focus(), 100);
   });
 
@@ -832,7 +877,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('editor-textarea').addEventListener('input', scheduleAutoSave);
 
-  // 削除ボタン → 確認モーダル表示
   document.getElementById('btn-delete').addEventListener('click', () => {
     document.getElementById('confirm-modal').classList.remove('hidden');
   });
@@ -844,7 +888,6 @@ document.addEventListener('DOMContentLoaded', () => {
     deleteCurrentNote();
   });
 
-  // 設定
   document.getElementById('btn-settings').addEventListener('click', () => {
     GH_KEYS.forEach(k => {
       const v = localStorage.getItem(k);
@@ -865,7 +908,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   syncLoad();
 
-  // Service Worker
   if ('serviceWorker' in navigator) {
     const sw = `
 self.addEventListener('install', e => e.waitUntil(
