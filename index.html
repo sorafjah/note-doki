@@ -432,20 +432,20 @@ body {
     <h2>GitHub設定</h2>
     <div class="form-group">
       <label>GitHubユーザー名</label>
-      <input type="text" id="gh-user" autocomplete="off">
+      <input type="text" id="syncnote-gh-user" autocomplete="off">
     </div>
     <div class="form-group">
       <label>リポジトリ名</label>
-      <input type="text" id="gh-repo" autocomplete="off">
+      <input type="text" id="syncnote-gh-repo" autocomplete="off">
     </div>
     <div class="form-group">
       <label>フォルダパス（任意）</label>
-      <input type="text" id="gh-folder" placeholder="notes" autocomplete="off">
+      <input type="text" id="syncnote-gh-folder" placeholder="notes" autocomplete="off">
       <div class="form-note">空白の場合はルートに保存</div>
     </div>
     <div class="form-group">
       <label>Personal Access Token</label>
-      <input type="password" id="gh-token" autocomplete="off">
+      <input type="password" id="syncnote-gh-token" autocomplete="off">
       <div class="form-note">localStorageのみに保存。外部送信なし。</div>
     </div>
     <div class="modal-buttons">
@@ -513,14 +513,15 @@ function loadLocal() {
   } catch(e) { notes = {}; }
 }
 
-const GH_KEYS = ['gh-user', 'gh-repo', 'gh-folder', 'gh-token'];
+// ★ キー名にプレフィックスを付けてカレンダーアプリと競合しないようにする
+const GH_KEYS = ['syncnote-gh-user', 'syncnote-gh-repo', 'syncnote-gh-folder', 'syncnote-gh-token'];
 function getGhConfig() {
-  const folder = localStorage.getItem('gh-folder');
+  const folder = localStorage.getItem('syncnote-gh-folder');
   return {
-    user:   localStorage.getItem('gh-user') || '',
-    repo:   localStorage.getItem('gh-repo') || '',
+    user:   localStorage.getItem('syncnote-gh-user') || '',
+    repo:   localStorage.getItem('syncnote-gh-repo') || '',
     folder: (folder && folder.trim()) ? folder.trim() : 'notes',
-    token:  localStorage.getItem('gh-token') || ''
+    token:  localStorage.getItem('syncnote-gh-token') || ''
   };
 }
 function isGhConfigured() {
