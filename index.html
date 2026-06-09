@@ -23,7 +23,6 @@
   --accent: #ff9500;
   --accent-red: #ff3b30;
   --font: -apple-system, "Hiragino Kaku Gothic ProN", "BIZ UDGothic", sans-serif;
-  /* ★修正1: iPhoneフォント倍率（JS で上書き） */
   --font-scale: 1;
 }
 
@@ -218,7 +217,6 @@ body {
   font-family: var(--font);
 }
 
-/* ★修正1: テキストエリアのフォントサイズ (--font-scale が1.5なら25.5px) */
 #editor-textarea {
   flex: 1;
   border: none;
@@ -384,9 +382,7 @@ body {
 .btn-danger { background: var(--accent-red); color: #fff; }
 .btn-cancel-white { background: var(--surface2); color: var(--text); }
 
-/* ★修正2: スワイプ中のビジュアルフィードバック用トランジション */
 #editor-screen {
-  transition: transform 0.15s ease-out;
   will-change: transform;
 }
 </style>
@@ -469,7 +465,7 @@ body {
 
 <script>
 // =====================================================
-// ★修正1: iPhoneかどうか判定してフォントを1.5倍に
+// iPhoneかどうか判定してフォントを1.5倍に
 // =====================================================
 (function() {
   const isIphone = /iPhone|iPod/.test(navigator.userAgent);
@@ -513,7 +509,6 @@ function loadLocal() {
   } catch(e) { notes = {}; }
 }
 
-// ★ キー名にプレフィックスを付けてカレンダーアプリと競合しないようにする
 const GH_KEYS = ['syncnote-gh-user', 'syncnote-gh-repo', 'syncnote-gh-folder', 'syncnote-gh-token'];
 function getGhConfig() {
   const folder = localStorage.getItem('syncnote-gh-folder');
@@ -723,19 +718,12 @@ async function deleteCurrentNote() {
   }
 }
 
-// =====================================================
-// ★修正3: syncLoad で「GitHubにないIDをローカルから削除」
-// =====================================================
 async function syncLoad() {
   if (!isGhConfigured()) return;
   setStatus('読込中…', 'loading');
   try {
     const files = await ghListFiles();
-
-    // GitHub上のIDセット
     const ghIds = new Set(files.map(f => f.name.replace('.txt', '')));
-
-    // ローカルにあってGitHubにないIDを削除
     let removed = 0;
     for (const id of Object.keys(notes)) {
       if (!ghIds.has(id)) {
@@ -743,8 +731,6 @@ async function syncLoad() {
         removed++;
       }
     }
-
-    // GitHub上のファイルを読み込み・更新
     let loaded = 0;
     for (const file of files) {
       const id = file.name.replace('.txt', '');
@@ -761,10 +747,8 @@ async function syncLoad() {
         loaded++;
       }
     }
-
     saveLocal();
     renderList();
-
     const msg = removed > 0
       ? `${loaded}件を読込（${removed}件を削除）`
       : loaded > 0 ? `${loaded}件を読込` : '同期済み';
@@ -782,46 +766,51 @@ function fixViewport() {
 }
 
 // =====================================================
-// ★修正2: スワイプで一覧に戻る（右→左スワイプ）
-// エディタ画面で右→左スワイプで showList()
+// スワイプで一覧に戻る（左端から右へスワイプ）
 // =====================================================
 function setupSwipeBack() {
   const editorScreen = document.getElementById('editor-screen');
-  const SWIPE_THRESHOLD = 60;  // 最低スワイプ距離(px)
-  const EDGE_START = 40;       // 画面右端から何pxのタッチを対象にするか
-  const DIRECTION_ANGLE = 30;  // 許容する縦方向のずれ(度)
+  const SWIPE_THRESHOLD = 40;   // 閾値を短くして素早く反応
+  const EDGE_START = 40;        // 画面左端から何pxのタッチを追跡するか
+  const MAX_VERT_RATIO = 0.5;   // 縦/横の比がこれを超えたらキャンセル
 
   let startX = 0;
   let startY = 0;
   let tracking = false;
+  let cancelled = false;
 
   editorScreen.addEventListener('touchstart', (e) => {
     if (!editorScreen.classList.contains('active')) return;
     const touch = e.touches[0];
-    // 画面右端エリア or 全体（どちらでも可にする場合は条件削除）
-    const sw = window.innerWidth;
-    // 右端から EDGE_START px 以内のタッチのみ追跡
-    if (touch.clientX < sw - EDGE_START) return;
+    // 画面左端 EDGE_START px 以内のタッチだけ追跡
+    if (touch.clientX > EDGE_START) return;
     startX = touch.clientX;
     startY = touch.clientY;
     tracking = true;
+    cancelled = false;
   }, { passive: true });
 
   editorScreen.addEventListener('touchmove', (e) => {
-    if (!tracking) return;
+    if (!tracking || cancelled) return;
     const touch = e.touches[0];
     const dx = touch.clientX - startX;
     const dy = touch.clientY - startY;
-    // 右→左 (dx < 0) のみ対象
-    if (dx >= 0) return;
-    // 縦方向が大きすぎる場合はキャンセル
-    const angle = Math.abs(Math.atan2(dy, dx) * 180 / Math.PI);
-    if (angle < (180 - DIRECTION_ANGLE) && angle > DIRECTION_ANGLE) {
-      tracking = false;
+
+    // 左→右（dx > 0）以外はキャンセル
+    if (dx <= 0) {
+      cancelled = true;
       editorScreen.style.transform = 'translateX(0)';
       return;
     }
-    // スワイプ中にエディタを少し左にずらしてフィードバック
+
+    // 縦ズレが大きい場合はキャンセル
+    if (Math.abs(dy) / dx > MAX_VERT_RATIO) {
+      cancelled = true;
+      editorScreen.style.transform = 'translateX(0)';
+      return;
+    }
+
+    // スワイプ中：指に追従させる
     editorScreen.style.transition = 'none';
     editorScreen.style.transform = `translateX(${dx}px)`;
   }, { passive: true });
@@ -829,21 +818,26 @@ function setupSwipeBack() {
   editorScreen.addEventListener('touchend', (e) => {
     if (!tracking) return;
     tracking = false;
+    if (cancelled) {
+      cancelled = false;
+      return;
+    }
+
     const touch = e.changedTouches[0];
     const dx = touch.clientX - startX;
 
-    if (dx < -SWIPE_THRESHOLD) {
-      // 閾値を超えたら一覧へ
-      editorScreen.style.transition = 'transform 0.2s ease-out';
-      editorScreen.style.transform = 'translateX(-100%)';
+    if (dx > SWIPE_THRESHOLD) {
+      // 閾値を超えたら一覧へ（右にスライドアウト）
+      editorScreen.style.transition = 'transform 0.18s ease-out';
+      editorScreen.style.transform = `translateX(${window.innerWidth}px)`;
       setTimeout(() => {
         editorScreen.style.transition = 'none';
         editorScreen.style.transform = 'translateX(0)';
         clearTimeout(autoSaveTimer);
         saveCurrentNote().then(() => showList());
-      }, 200);
+      }, 180);
     } else {
-      // 戻す
+      // 足りなければ元の位置に戻す
       editorScreen.style.transition = 'transform 0.15s ease-out';
       editorScreen.style.transform = 'translateX(0)';
     }
