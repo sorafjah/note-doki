@@ -770,9 +770,9 @@ function fixViewport() {
 // =====================================================
 function setupSwipeBack() {
   const editorScreen = document.getElementById('editor-screen');
-  const SWIPE_THRESHOLD = 40;   // 閾値を短くして素早く反応
-  const EDGE_START = 40;        // 画面左端から何pxのタッチを追跡するか
-  const MAX_VERT_RATIO = 0.5;   // 縦/横の比がこれを超えたらキャンセル
+  const SWIPE_THRESHOLD = 40;        // 確定に必要な最小距離(px)
+  const EDGE_START_RATIO = 0.5;      // 画面幅の左半分ならどこからでも開始OK
+  const MAX_VERT_RATIO = 0.6;        // 縦/横の比がこれを超えたらキャンセル
 
   let startX = 0;
   let startY = 0;
@@ -782,8 +782,8 @@ function setupSwipeBack() {
   editorScreen.addEventListener('touchstart', (e) => {
     if (!editorScreen.classList.contains('active')) return;
     const touch = e.touches[0];
-    // 画面左端 EDGE_START px 以内のタッチだけ追跡
-    if (touch.clientX > EDGE_START) return;
+    // 画面左半分以内のタッチだけ追跡
+    if (touch.clientX > window.innerWidth * EDGE_START_RATIO) return;
     startX = touch.clientX;
     startY = touch.clientY;
     tracking = true;
@@ -827,14 +827,23 @@ function setupSwipeBack() {
     const dx = touch.clientX - startX;
 
     if (dx > SWIPE_THRESHOLD) {
-      // 閾値を超えたら一覧へ（右にスライドアウト）
+      // ① アニメーション開始（右にスライドアウト）
       editorScreen.style.transition = 'transform 0.18s ease-out';
       editorScreen.style.transform = `translateX(${window.innerWidth}px)`;
+
+      // ② アニメーション終了直前に一覧を裏で準備してから切り替え
       setTimeout(() => {
-        editorScreen.style.transition = 'none';
-        editorScreen.style.transform = 'translateX(0)';
         clearTimeout(autoSaveTimer);
-        saveCurrentNote().then(() => showList());
+        // エディタを非表示にする前にtransitionを無効化してチラつきを防ぐ
+        editorScreen.style.transition = 'none';
+        // 一覧画面を先に表示してからエディタを隠す
+        const listScreen = document.getElementById('list-screen');
+        listScreen.style.display = 'flex';
+        renderList();
+        editorScreen.classList.remove('active');
+        editorScreen.style.transform = 'translateX(0)';
+        // バックグラウンドで保存
+        saveCurrentNote();
       }, 180);
     } else {
       // 足りなければ元の位置に戻す
